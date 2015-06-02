@@ -12,9 +12,9 @@ InfluxDB features a SQL like query language, only used for querying data. The HT
 InfluxDB allows you to use any characters in your time series names. However, parsing queries for those series can be tricky. So it's best to wrap your queries for any series that has characters other than letters in double quotes like this:
 
 ```sql
-select * from "series with special characters!"
+select * from "series with special characters!";
 
-select * from "series with \"double quotes\""
+select * from "series with \"double quotes\"";
 ```
 
 ## Getting a List of Time Series
@@ -24,7 +24,7 @@ There are two different methods for returning a list of all time series in a dat
 ```sql
 list series
 -- or this
-select * from /.*/ limit 1
+select * from /.*/ limit 1;
 ```
 
 The first query will return all series, while the second will return the most recent point from each series that matches the given regex.
@@ -91,10 +91,10 @@ suffixes from the previous section if you don't want to specify
 timestamp in microseconds. For example:
 
 ```sql
-select value from response_times where time > 1388534400s
+select value from response_times where time > 1388534400s;
 ```
 
-will return all points that were writtern after `2014-01-01 00:00:00`
+will return all points that were written after `2014-01-01 00:00:00`
 
 ## Selecting a Specific Point
 
@@ -111,29 +111,29 @@ select * from events where time = 1400497861762723 and sequence_number = 2321;
 You can select from multiple series by name or by specifying a regex to match against. Here are a few examples.
 
 ```sql
-select * from events, errors;
+select * from events, errors where time > now() - 1h;
 ```
 
-Get the last hour of data from the two series `events`, and `errors`. Here's a regex example:
+The above query will get the last hour of data from the two series `events` and `errors`. Here's a regex example:
 
 ```sql
 select * from /^stats\./i where time > now() - 1h;
 ```
 
-Get the last hour of data from every time series that starts with `stats.` (case insensitive). Another example:
+This will get the last hour of data from every time series that starts with `stats`, case insensitively. Another example:
 
 ```sql
 select * from /.*/ limit 1;
 ```
 
-Return the last point from every time series in the database.
+This returns the last point from every time series in the database.
 
 ## Deleting data or dropping series
 
 The delete query looks like the following:
 
 ```sql
-delete from response_times where time < now() - 1h
+delete from response_times where time < now() - 1h;
 ```
 
 With no time constraints this query will delete every point in the
@@ -142,14 +142,14 @@ time series `response_times`. You must be a cluster or database admin to run del
 You can also delete from any series that matches a regex:
 
 ```sql
-delete from /^stats.*/ where time < now() - 7d
+delete from /^stats.*/ where time < now() - 7d;
 ```
 
 Any conditions in the where clause that don't set the start and/or end
-time will be ignored, for example the following query returns an error:
+time will be ignored. For example, the following query returns an error:
 
 ```sql
-delete from response_times where user = 'foo'
+delete from response_times where user = 'foo';
 ```
 
 Delete time conditions only support ranges, an equals condition (=) is
@@ -191,7 +191,7 @@ select * from events
 where (email =~ /.*gmail.*/ or email =~ /.*yahoo.*/) and state = 'ny';
 ```
 
-The where clause supports comparisons against regexes, strings, booleans, floats, integers, and the times listed before. Comparators include `=` equal to, `>` greater than, `<` less than, `<>` not equal to, `=~` matches against, `!~` doesn't match against. You can chain logic together using `and` and `or` and you can separate using `(` and `)`
+The where clause supports comparisons against regexes, strings, booleans, floats, integers, and the times listed before. Comparators include `=` equal to, `>` greater than, `<` less than, `<>` not equal to, `=~` matches against, `!~` doesn't match against. You can chain logic together using `and` and `or`, and you can separate using `(` and `)`.
 
 ## Group By
 
@@ -208,7 +208,7 @@ select count(type) from events group by time(10m), type;
 select percentile(value, 95) from response_times group by time(30s);
 ```
 
-By default functions will output a column that have the same name as the function, e.g. `count` will output a column with the name `count` in order to change the name of the column an `AS` clause is required. Here is an example to illustrate how aliasing work:
+By default functions will output a column that has the same name as the function, e.g. `count` will output a column with the name `count`. In order to change the name of the column an `AS` clause is required. Here is an example to illustrate how aliasing work:
 
 ```sql
 select count(type) as number_of_types group by time(10m);
@@ -220,33 +220,33 @@ units you can use the respective suffix `u`, `s`, `m`, `h`, `d` and `w`.
 
 ### Filling intervals with no data
 
-By default, group by intervals that have no data will not have associated datapoints. For instance, say you have the following query:
+By default, group by intervals that have no data will not have associated datapoints. Say you have the following query:
 
 ```sql
 select count(type) from events
-group by time(1h) where time > now() - 3h
+group by time(1h) where time > now() - 3h;
 ```
 
-If the events series had data for this hour and two hours ago only, you'd only get two points in the result. If you want to ensure that you get back points for intervals that don't have data, you can use the `fill` function. Any numerical value, including negative values, and the special value `null`, are valid values for `fill`. For example, each of the following queries is valid:
+If the events series only had data for this hour and two hours ago, you'd only get two points in the result. If you want to ensure that you get back points for intervals that don't have data, you can use the `fill` function. Any numerical value, including negative values, and the special value `null`, are valid values for `fill`. For example, each of the following queries is valid:
 
 ```sql
 select count(type) from events
-group by time(1h) fill(0) where time > now() - 3h
+group by time(1h) fill(0) where time > now() - 3h;
 ```
 ```sql
 select count(type) from events
-group by time(1h) fill(-1) where time > now() - 3h
+group by time(1h) fill(-1) where time > now() - 3h;
 ```
 ```sql
 select count(type) from events
-group by time(1h) fill(null) where time > now() - 3h
+group by time(1h) fill(null) where time > now() - 3h;
 ```
 
 Note that `fill` must go at the end of the group by clause if there are other arguments:
 
 ```sql
 select count(type) from events
-group by time(1h), type fill(0) where time > now() - 3h
+group by time(1h), type fill(0) where time > now() - 3h;
 ```
 
 ## Merging Series
@@ -254,7 +254,7 @@ group by time(1h), type fill(0) where time > now() - 3h
 You can merge multiple time series into a single stream in the select clause. This is helpful when you want to run a function over one of the columns with an associated group by time clause.
 
 ```sql
-select count(type) from user_events merge admin_events group by time(10m)
+select count(type) from user_events merge admin_events group by time(10m);
 ```
 
 You'd get a single time series with the count of events from the two combined in 10 minute intervals.
@@ -275,7 +275,7 @@ The above query will return a time series of the combined cpu load for hosts a a
 ```sql
 select errors_per_minute.value / page_views_per_minute.value
 from errors_per_minute
-inner join page_views_per_minute
+inner join page_views_per_minute;
 ```
 
 The above query will return the error rate per minute.
